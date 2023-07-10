@@ -63,7 +63,7 @@ namespace MauiHttpClient.Services.Request
 
         private async Task<TResult> HandleResponse<TResult>(HttpResponseMessage response)
         {
-            if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.BadRequest)
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
             {
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var sr = new StreamReader(stream);
@@ -85,18 +85,6 @@ namespace MauiHttpClient.Services.Request
 
             await _dialogService.ShowAlertAsync(null, $"服务器开小差了，状态码：{(int)response.StatusCode}，时间：{DateTime.Now}", "确定");
             return default(TResult);
-        }
-
-        private async Task<ResultModel<TResult>> ReadResponse<TResult>(HttpResponseMessage response)
-        {
-            using (var stream = await response.Content.ReadAsStreamAsync())
-            using (var sr = new StreamReader(stream))
-            using (var reader = new JsonTextReader(sr))
-            {
-                var serializer = new JsonSerializer();
-
-                return serializer.Deserialize<ResultModel<TResult>>(reader);
-            }
         }
     }
 }
