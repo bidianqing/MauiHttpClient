@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using MauiHttpClient.Services.Dialog;
+using Newtonsoft.Json;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 
@@ -12,10 +15,20 @@ namespace MauiHttpClient.Services.Request
     /// </summary>
     public class RequestService : IRequestService
     {
-        private readonly HttpClient _client;
-        public RequestService(HttpClient client)
+        private readonly IDialogService _dialogService;
+        private readonly Lazy<HttpClient> _httpClient =
+            new(() =>
+                {
+                    var httpClient = new HttpClient();
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpClient.BaseAddress = new Uri(Urls.Domain);
+                    return httpClient;
+                },
+                LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public RequestService(IDialogService dialogService)
         {
-            _client = client;
+            _dialogService = dialogService;
         }
 
         public async Task<TResult> GetAsync<TResult>(string uri)
@@ -43,46 +56,47 @@ namespace MauiHttpClient.Services.Request
 
         public async Task<TResult> SendAsync<TResult>(HttpRequestMessage request)
         {
-            var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            var response = await _httpClient.Value.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             return await this.HandleResponse<TResult>(response);
         }
 
         private async Task<TResult> HandleResponse<TResult>(HttpResponseMessage response)
         {
-            if (!response.IsSuccessStatusCode)
+            if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.BadRequest)
             {
-                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-                {
-                    var rm = await this.ReadResponse<TResult>(response);
-                    await App.Current.MainPage.DisplayAlert("Warning", rm.Message, "确定");
+                using var stream = await response.Content.ReadAsStreamAsync();
+                using var sr = new StreamReader(stream);
+                using var reader = new JsonTextReader(sr);
+                var serializer = new JsonSerializer();
+                var resultModel = serializer.Deserialize<ResultModel<TResult>>(reader);
 
-                    return rm.Data;
+                if (!resultModel.Success)
+                {
+                    await _dialogService.ShowAlertAsync(null, resultModel.Message, "确定");
                 }
 
-                await App.Current.MainPage.DisplayAlert("Error", $"服务器开小差了，状态码：{response.StatusCode}，时间：{DateTime.Now}", "确定");
-                return default(TResult);
+                return resultModel.Data;
             }
-
-            var resultModel = await this.ReadResponse<TResult>(response);
-
-            if (!resultModel.Success)
+            else if(response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                await App.Current.MainPage.DisplayAlert("Warning", resultModel.Message, "确定");
-                return default(TResult);
+
             }
 
-            return resultModel.Data;
+            await _dialogService.ShowAlertAsync(null, $"服务器开小差了，状态码：{(int)response.StatusCode}，时间：{DateTime.Now}", "确定");
+            return default(TResult);
         }
 
         private async Task<ResultModel<TResult>> ReadResponse<TResult>(HttpResponseMessage response)
         {
-            using var stream = await response.Content.ReadAsStreamAsync();
-            using var sr = new StreamReader(stream);
-            using var reader = new JsonTextReader(sr);
-            var serializer = new JsonSerializer();
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var sr = new StreamReader(stream))
+            using (var reader = new JsonTextReader(sr))
+            {
+                var serializer = new JsonSerializer();
 
-            return serializer.Deserialize<ResultModel<TResult>>(reader);
+                return serializer.Deserialize<ResultModel<TResult>>(reader);
+            }
         }
     }
 }

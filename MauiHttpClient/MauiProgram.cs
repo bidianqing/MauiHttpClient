@@ -1,6 +1,6 @@
-﻿using MauiHttpClient.Services.Request;
+﻿using MauiHttpClient.Services.Dialog;
+using MauiHttpClient.Services.Request;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Hosting;
 
 namespace MauiHttpClient;
 
@@ -17,14 +17,8 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		builder.Services.AddSingleton(sp =>
-		{
-			var client = new HttpClient(new MauiHttpClientHandler());
-			client.BaseAddress = new Uri(Urls.Domain);
-
-            return client;
-        });
         builder.Services.AddSingleton<IRequestService, RequestService>();
+        builder.Services.AddSingleton<IDialogService, DialogService>();
 
 #if DEBUG
         builder.Logging.AddDebug();

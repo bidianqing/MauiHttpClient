@@ -16,7 +16,7 @@ public partial class MainPage : ContentPage
     {
         var json = new JObject
         {
-            ["phone"] = "",
+            ["phone"] = "123",
             ["code"] = "0000"
         }.ToString(Formatting.None);
 
