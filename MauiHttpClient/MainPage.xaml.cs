@@ -1,5 +1,4 @@
-﻿using MauiHttpClient.Services.Request;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace MauiHttpClient;
@@ -20,10 +19,7 @@ public partial class MainPage : ContentPage
             ["code"] = "0000"
         }.ToString(Formatting.None);
 
-        var result = await Dispatcher.DispatchAsync(async () =>
-        {
-            return await App.RequestService.PostAsync<LoginResult>(Urls.Login, json);
-        });
+        var result = await App.RequestService.PostAsync<LoginResult>(Urls.Login, json);
 
         LabelToken.Text = result?.Token;
 

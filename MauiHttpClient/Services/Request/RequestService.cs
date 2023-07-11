@@ -65,12 +65,14 @@ namespace MauiHttpClient.Services.Request
         {
             if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
             {
-                using var stream = await response.Content.ReadAsStreamAsync();
-                using var sr = new StreamReader(stream);
-                using var reader = new JsonTextReader(sr);
-                var serializer = new JsonSerializer();
-                var resultModel = serializer.Deserialize<ResultModel<TResult>>(reader);
+                //using var stream = await response.Content.ReadAsStreamAsync();
+                //using var sr = new StreamReader(stream);
+                //using var reader = new JsonTextReader(sr);
+                //var serializer = new JsonSerializer();
+                //var resultModel = serializer.Deserialize<ResultModel<TResult>>(reader);
 
+                var content = await response.Content.ReadAsStringAsync();
+                var resultModel = JsonConvert.DeserializeObject<ResultModel<TResult>>(content);
                 if (!resultModel.Success)
                 {
                     await _dialogService.ShowAlertAsync(null, resultModel.Message, "确定");
