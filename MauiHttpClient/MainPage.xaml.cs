@@ -16,11 +16,14 @@ public partial class MainPage : ContentPage
     {
         var json = new JObject
         {
-            ["phone"] = "123",
+            ["phone"] = this.Phone.Text,
             ["code"] = "0000"
         }.ToString(Formatting.None);
 
-        var result = await App.RequestService.PostAsync<LoginResult>(Urls.Login, json);
+        var result = await Dispatcher.DispatchAsync(async () =>
+        {
+            return await App.RequestService.PostAsync<LoginResult>(Urls.Login, json);
+        });
 
         LabelToken.Text = result?.Token;
 
