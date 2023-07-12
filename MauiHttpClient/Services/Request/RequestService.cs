@@ -86,7 +86,7 @@ namespace MauiHttpClient.Services.Request
                     await _dialogService.ShowAlertAsync(null, resultModel.Message, "确定");
                 }
 
-                return resultModel.Data;
+                return resultModel?.Data;
             }
             else if(response.StatusCode == HttpStatusCode.Unauthorized)
             {
