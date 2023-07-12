@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 
 namespace MauiHttpClient.Services.Request
 {
@@ -65,14 +66,21 @@ namespace MauiHttpClient.Services.Request
         {
             if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
             {
+                var stream = await response.Content.ReadAsStringAsync();
+                var resultModel = System.Text.Json.JsonSerializer.Deserialize<ResultModel<TResult>>(stream, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+
                 //using var stream = await response.Content.ReadAsStreamAsync();
                 //using var sr = new StreamReader(stream);
                 //using var reader = new JsonTextReader(sr);
                 //var serializer = new JsonSerializer();
                 //var resultModel = serializer.Deserialize<ResultModel<TResult>>(reader);
 
-                var content = await response.Content.ReadAsStringAsync();
-                var resultModel = JsonConvert.DeserializeObject<ResultModel<TResult>>(content);
+                //var content = await response.Content.ReadAsStringAsync();
+                //var resultModel = JsonConvert.DeserializeObject<ResultModel<TResult>>(content);
                 if (!resultModel.Success)
                 {
                     await _dialogService.ShowAlertAsync(null, resultModel.Message, "确定");
