@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 
 namespace MauiHttpClient;
 
@@ -13,11 +12,11 @@ public partial class MainPage : ContentPage
 
     private async void OnCounterClicked(object sender, EventArgs e)
     {
-        var json = new JObject
+        var json = new JsonObject
         {
             ["phone"] = this.Phone.Text,
             ["code"] = "0000"
-        }.ToString(Formatting.None);
+        }.ToJsonString();
 
         var result = await App.RequestService.PostAsync<LoginResult>(Urls.Login, json);
 

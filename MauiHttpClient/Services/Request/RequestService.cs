@@ -1,5 +1,4 @@
 ﻿using MauiHttpClient.Services.Dialog;
-using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
@@ -50,7 +49,7 @@ namespace MauiHttpClient.Services.Request
         public async Task<TResult> PostAsync<TRequest, TResult>(string uri, TRequest data) where TRequest : class, new()
         {
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = new StringContent(JsonConvert.SerializeObject(data, Formatting.None), Encoding.UTF8, MediaTypeNames.Application.Json);
+            request.Content = new StringContent(JsonSerializer.Serialize(data), Encoding.UTF8, MediaTypeNames.Application.Json);
 
             return await this.SendAsync<TResult>(request);
         }
@@ -67,7 +66,7 @@ namespace MauiHttpClient.Services.Request
             if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.BadRequest)
             {
                 var stream = await response.Content.ReadAsStringAsync();
-                var resultModel = System.Text.Json.JsonSerializer.Deserialize<ResultModel<TResult>>(stream, new JsonSerializerOptions
+                var resultModel = JsonSerializer.Deserialize<ResultModel<TResult>>(stream, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
